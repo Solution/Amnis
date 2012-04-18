@@ -23,10 +23,12 @@
 typedef unsigned int uint;
 
 #define LOCALHOST_IP "127.0.0.1"
+#define RECV_BUFFER_SIZE 512
 
 enum Protocol { TCP, UDP };
 enum SocketStop { READ, WRITE, ALL };
 enum AddressType { LOCALHOST, ALL_AVAILABLE };
+enum EventType { NewConnection, ReadyRead, Disconnect };
 
 class Socket
 {
@@ -62,12 +64,27 @@ public:
 
 	void setPendingConnection(int);
 
+	// Event control
+	void bindEvent(int eventType, void(*event)(void *ptr));
+	void emitEvent(int eventType);
+	bool isReadyReadCalled;
+
+	// Events
+	void (*newConnectionEvent)(void *ptr);
+	void (*readyReadEvent)(void *ptr);
+	void (*disconnectEvent)(void *ptr);
+	//
+
+	void close();
+	
 private:
 	int socketDescriptor;
 	uint port;
 	std::string address;
 	struct sockaddr_in socketStruct;
 
+	// Event control
+	void setupReadyRead();
 	pthread_t acceptingThread;
 
 	int pendingConnection;
