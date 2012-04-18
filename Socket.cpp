@@ -10,7 +10,7 @@
 void *acceptSocket(void* ptr)
 {
 	Socket *serverSocket = (Socket*)ptr;
-	for( ; ; )
+	while(true)
 	{
 		serverSocket->setPendingConnection(accept(serverSocket->getSocketDescriptor(),
 									(sockaddr*) NULL,
