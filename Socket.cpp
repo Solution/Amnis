@@ -18,6 +18,10 @@ void *acceptSocket(void* ptr)
 	}
 }
 
+Socket::Socket()
+{
+
+}
 
 Socket::Socket(int type)
 	:pendingConnection(-1)
@@ -92,6 +96,11 @@ void Socket::start(uint connections = 1)
 
 }
 
+void Socket::write(std::string msg)
+{
+	send(socketDescriptor, msg.c_str(), static_cast<size_t>(msg.size()), 0);
+}
+
 void Socket::setPendingConnection(int socket)
 {
 	pendingConnection = socket;
@@ -100,6 +109,11 @@ void Socket::setPendingConnection(int socket)
 int Socket::getNextPendingConnection()
 {
 	return pendingConnection;
+}
+
+void Socket::setSocketDescriptor(int socket)
+{
+	socketDescriptor = socket;
 }
 
 int Socket::getSocketDescriptor() const

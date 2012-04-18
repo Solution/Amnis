@@ -32,6 +32,7 @@ class Socket
 {
 
 public:
+	Socket(); // create without any bindings
 	Socket(int); // create the socket
 	Socket(const Socket&);
 	virtual ~Socket();
@@ -55,6 +56,7 @@ public:
 	void stop(uint);
 
 	int getSocketDescriptor() const;
+	void setSocketDescriptor(int);
 	std::string getSocketAddress() const;
 	uint getSocketPort() const;
 

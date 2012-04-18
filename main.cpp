@@ -59,7 +59,13 @@ int main(int argc, char** argv)
 		{
 
 		}
-		cout << "New connection" << endl;
+
+		Socket *client = new Socket;
+		client->setSocketDescriptor(server->getNextPendingConnection());
+		client->write("Ahoj");
+
+		delete server,
+			client;
 	}catch(SocketException  e)
 	{
 		cout << e.getMessage() << endl;
