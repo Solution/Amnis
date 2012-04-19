@@ -12,32 +12,7 @@
 #include <vector>
 
 using namespace std;
-
-#define BUFFER_SIZE 8196
-
-void videoStream()
-{
-		cout << "Amnis started" << endl;
-	char *buffer = new char[BUFFER_SIZE];
-
-	ifstream videoStream("/srv/tmp.avi", ios::binary | ios::out | ios::ate);
-	cout << "Opening the file: /srv/tmp.avi" << endl;
-
-	int size = videoStream.tellg();
-	cout << "Size of the file: " << size << endl;
-	videoStream.seekg(0, ios::beg);
-
-	while(!videoStream.eof())
-	{
-		videoStream.read(buffer, BUFFER_SIZE);
-	}
-
-	cout << "End of file" << endl;
-
-	videoStream.close();
-	delete buffer;
-}
-
+#include "Base64.h"
 #include "Socket.h"
 
 
@@ -55,9 +30,8 @@ string extractLine(string& data, uint numLine)
 string httpHeader()
 {
 	string header = "HTTP/1.1 200 OK\n "
-				  "Content-type: text/html; charset=UTF-8\n"
 				  // "Content-encoding: gzip\n"
-				  "Server: Example server\n\n";
+				  "Server: Amnis HTTP\n";
 	return header;
 }
 
@@ -82,10 +56,26 @@ string getFileName(string& data)
 }
 
 #define PATH_TO_DOCUMENTS "/var/www"
+#define ROOT_ITEM "root.pad"
+
+bool isItResource(string &fileName)
+{
+	vector<string> nameParts = splitString(fileName, '.');
+	if(nameParts[1].compare("jpg") == 0 || nameParts[1].compare("JPG") == 0
+	|| nameParts[1].compare("png") == 0 || nameParts[1].compare("PNG") == 0
+	|| nameParts[1].compare("gif") == 0 || nameParts[1].compare("GIF") == 0)
+	{
+		return true;
+	}
+	else{
+		return false;
+	}
+}
 
 string getFileContent(string &fileName)
 {
 	string path = PATH_TO_DOCUMENTS, returnedData;
+	if(fileName.compare("/") == 0) fileName.append(ROOT_ITEM);
 	path.append(fileName);
 	cout << path << endl;
 	ifstream fileStream(path.c_str(), ios::binary);
@@ -94,11 +84,19 @@ string getFileContent(string &fileName)
 	{
 		fileStream.seekg(0, ios::end);
 		int fileLength = fileStream.tellg();
+		cout << fileLength << endl;
 		fileStream.seekg(0, ios::beg);
 		char *buffer = new char[fileLength];
 
 		fileStream.read(buffer, fileLength);
-		returnedData.append(buffer);
+		if(isItResource(fileName))
+		{
+			cout << "It is resource" << endl;
+			returnedData.append(base64_encode(reinterpret_cast<const unsigned char*>(buffer), fileLength));
+		}else{
+			cout << "Its not resource" << endl;
+			returnedData.append(buffer);
+		}
 
 		cout << "It works" << endl;
 
@@ -136,8 +134,26 @@ void readyRead(void *ptr)
 		//cout << "I'll say no to him with h1 paragraph" << endl;
 		// create a http response
 		string sendingData = httpHeader();
-		sendingData.append(getFileContent(requestedFile));
-		//cout << sendingData << endl;
+		vector<string> nameParts = splitString(requestedFile, '.');
+		cout << nameParts[1] << endl;
+		if(nameParts[1].compare("jpg") == 0 || nameParts[1].compare("JPG") == 0)
+		{
+			sendingData.append("Content-type: image/jpeg;\n\n");
+			sendingData.append(base64_decode(getFileContent(requestedFile)));
+		}else if(nameParts[1].compare("png") == 0 || nameParts[1].compare("PNG") == 0)
+		{
+			sendingData.append("Content-type: image/png;\n\n");
+			sendingData.append(base64_decode(getFileContent(requestedFile)));
+		}
+		else if(nameParts[1].compare("gif") == 0 || nameParts[1].compare("GIF") == 0)
+		{
+			sendingData.append("Content-type: image/gif;\n\n");
+			sendingData.append(base64_decode(getFileContent(requestedFile)));
+		}
+		else{
+			sendingData.append("Content-type: text/html; charset=UTF-8\n\n");
+			sendingData.append(getFileContent(requestedFile));
+		}
 
 		// and send it to the client
 		client->write(sendingData);
