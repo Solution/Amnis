@@ -67,20 +67,25 @@ void readyRead(void *ptr)
 	try
 	{
 		cout << "Client is sending me something" << endl;
+		// cast void ptr to our socket
 		Socket *client = static_cast<Socket*>(ptr);
 
+		// get data from socket
 		string data = client->read(1024);
+		// extract line number 0 from request
 		string line = extractLine(data, 0);
 
 		cout << "Client wants from me: "
 				<< line << endl;
 
 		cout << "I'll say no to him with h1 paragraph" << endl;
-
+		// create a http response
 		string sendingData = httpHeader().append("\n<h1>No!</h1>");
+		// and send it to the client
 		client->write(sendingData);
 
 		cout << "And close the connection" << endl;
+		// this will close the socket, which is neccesary
 		client->close();
 	}catch(SocketException e)
 	{
@@ -94,10 +99,16 @@ void newHttpConnection(void *ptr)
 	try
 	{
 		cout << "New connection" << endl;
+		// Cast void pointer to Socket
 		Socket *http = static_cast<Socket*>(ptr);
 
+		// Create a new Socket client
 		Socket *client = new Socket();
+		// Set socket descriptor of last connection to our client
 		client->setSocketDescriptor(http->getNextPendingConnection());
+		// and bind readyread event to our function
+		// readyread is event, which is omitted, when is something to read
+		// on the socket descriptor
 		client->bindEvent(ReadyRead, &readyRead);
 	}catch(SocketException e)
 	{
@@ -109,14 +120,24 @@ void createSimpleHttpServer()
 {
 	try
 	{
+		// Create a TCP protocol based Socket
 		Socket *http = new Socket(TCP);
+		// Bind to all available address and port 4444, you know *:4444
 		http->bindOn(ALL_AVAILABLE, 4444);
 
 		cout << "Server start and wait for connection" << endl;
+		// Bind the new connection event, to our function
 		http->bindEvent(NewConnection, &newHttpConnection);
+		// And start listening, 1 = maximum connections
 		http->start(1);
-
-		while(true) {}
+		string input;
+		// some il
+		while(input.compare("stop") != 0)
+		{
+			cin >> input;
+		}
+		http->close();
+		delete http;
 	}catch(SocketException e)
 	{
 		cout << e.getMessage() << endl;
@@ -124,6 +145,9 @@ void createSimpleHttpServer()
 }
 
 // http server end
+
+// UDP messager(client, client)
+
 
 int main(int argc, char** argv)
 {
