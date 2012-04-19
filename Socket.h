@@ -72,6 +72,10 @@ public:
 	void (*newConnectionEvent)(void *ptr);
 	void (*readyReadEvent)(void *ptr);
 	void (*disconnectEvent)(void *ptr);
+
+	// slots
+	static void *acceptSockets(void *ptr);
+	static void *readyReadSockets(void *ptr);
 	//
 
 	void close();

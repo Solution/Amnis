@@ -7,37 +7,6 @@
 
 #include "Socket.h"
 
-void *acceptSocket(void *ptr)
-{
-	Socket *serverSocket = static_cast<Socket*>(ptr);
-	int socket;
-
-	while(true)
-	{
-		if((socket = accept(serverSocket->getSocketDescriptor(),
-									(sockaddr*) NULL,
-									NULL)) != -1)
-		{
-			serverSocket->setPendingConnection(socket);
-			serverSocket->emitEvent(NewConnection);
-		}
-	}
-	return NULL;
-}
-
-void *readyReadSocket(void *ptr)
-{
-	Socket *serverSocket = static_cast<Socket*>(ptr);
-	int controlSize = 0, cTemp = 0;
-
-	while(controlSize != (cTemp = recv(serverSocket->getSocketDescriptor(), NULL, -1, MSG_PEEK)))
-	{
-		controlSize = cTemp;
-		serverSocket->emitEvent(ReadyRead);
-	}
-	return NULL;
-}
-
 Socket::Socket()
 	:pendingConnection(-1)
 {
@@ -110,7 +79,7 @@ void Socket::start(uint connections = 1)
 	// create thread for pending connections
 	acceptingThread = pthread_create(&acceptingThread,
 									 NULL,
-									 acceptSocket,
+									 &Socket::acceptSockets,
 									 static_cast<void*>(this));
 
 	// the thread will be terminated by another thread
@@ -159,6 +128,38 @@ void Socket::close()
 {
 	//stop(ALL);
 	::close(socketDescriptor);
+}
+
+// slots
+void *Socket::acceptSockets(void* ptr)
+{
+	Socket *serverSocket = static_cast<Socket*>(ptr);
+	int socket;
+
+	while(true)
+	{
+		if((socket = accept(serverSocket->getSocketDescriptor(),
+									(sockaddr*) NULL,
+									NULL)) != -1)
+		{
+			serverSocket->setPendingConnection(socket);
+			serverSocket->emitEvent(NewConnection);
+		}
+	}
+	return NULL;
+}
+
+void *Socket::readyReadSockets(void* ptr)
+{
+	Socket *serverSocket = static_cast<Socket*>(ptr);
+	int controlSize = 0, cTemp = 0;
+
+	while(controlSize != (cTemp = recv(serverSocket->getSocketDescriptor(), NULL, -1, MSG_PEEK)))
+	{
+		controlSize = cTemp;
+		serverSocket->emitEvent(ReadyRead);
+	}
+	return NULL;
 }
 
 void Socket::setPendingConnection(int socket)
@@ -236,7 +237,7 @@ void Socket::setupReadyRead()
 
 	readyReadThread = pthread_create(&readyReadThread,
 									 NULL,
-									 readyReadSocket,
+									 &Socket::readyReadSockets,
 									 static_cast<void*>(this));
 
 	// the thread will be terminated by another thread

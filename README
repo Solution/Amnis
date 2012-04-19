@@ -1,0 +1,18 @@
+
+Statistic from siege, for HTTP example:
+
+Transactions:		         376 hits
+Availability:		       25.95 %
+Elapsed time:		        3.71 secs
+Data transferred:	        0.05 MB
+Response time:		        0.02 secs
+Transaction rate:	      101.35 trans/sec
+Throughput:		        0.01 MB/sec
+Concurrency:		        1.57
+Successful transactions:         376
+Failed transactions:	        1073
+Longest transaction:	        0.06
+Shortest transaction:	        0.01
+
+it's not so bad, for one-day code, hm? :-D
+Code missing a ThreadPool, so it's the next thing on the scheduler.
