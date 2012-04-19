@@ -9,6 +9,7 @@
 #include <fstream>
 #include <errno.h>
 #include <stdlib.h>
+#include <vector>
 
 using namespace std;
 
@@ -60,6 +61,25 @@ string httpHeader()
 	return header;
 }
 
+vector<string> splitString(string& data, char delimiter)
+{
+	uint startPos = 0, pos;
+	vector<string> splittedStrings;
+
+	while((pos = data.find(delimiter, startPos)) != string::npos)
+	{
+		splittedStrings.push_back(data.substr(startPos, pos));
+		startPos = pos;
+	}
+	return splittedStrings;
+}
+
+string getFileName(string& data)
+{
+	vector<string> fields = splitString(data, 0x20);
+	return fields[2];
+}
+
 // Http server - start
 
 void readyRead(void *ptr)
@@ -74,9 +94,13 @@ void readyRead(void *ptr)
 		string data = client->read(1024);
 		// extract line number 0 from request
 		string line = extractLine(data, 0);
+		string requestedFile = getFileName(line);
 
-		cout << "Client wants from me: "
+		cout << "Client wants from me(hole request): "
 				<< line << endl;
+
+		cout << "Only file name: "
+				<< requestedFile << endl;
 
 		cout << "I'll say no to him with h1 paragraph" << endl;
 		// create a http response
