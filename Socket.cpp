@@ -28,33 +28,25 @@ void *acceptSocket(void *ptr)
 void *readyReadSocket(void *ptr)
 {
 	Socket *serverSocket = static_cast<Socket*>(ptr);
-	char *buff = new char[2];
-	int check;
-	while(true)
+	int controlSize = 0, cTemp = 0;
+
+	while(controlSize != (cTemp = recv(serverSocket->getSocketDescriptor(), NULL, -1, MSG_PEEK)))
 	{
-		if(serverSocket->isReadyReadCalled == false &&
-				(check = recv(serverSocket->getSocketDescriptor(),
-					 buff,
-					 2,
-				     MSG_PEEK)) != -1)
-		{
-			serverSocket->isReadyReadCalled = true;
-			serverSocket->emitEvent(ReadyRead);
-		}
+		controlSize = cTemp;
+		serverSocket->emitEvent(ReadyRead);
 	}
 	return NULL;
 }
 
 Socket::Socket()
-	:pendingConnection(-1),
-	isReadyReadCalled(false)
+	:pendingConnection(-1)
 {
 
 }
 
 Socket::Socket(int type)
 	:pendingConnection(-1),
-	isReadyReadCalled(false)
+	socketType(type)
 {
 	if(type == TCP)
 	{

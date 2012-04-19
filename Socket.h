@@ -67,7 +67,6 @@ public:
 	// Event control
 	void bindEvent(int eventType, void(*event)(void *ptr));
 	void emitEvent(int eventType);
-	bool isReadyReadCalled;
 
 	// Events
 	void (*newConnectionEvent)(void *ptr);
@@ -76,9 +75,10 @@ public:
 	//
 
 	void close();
-	
+
 private:
 	int socketDescriptor;
+	uint socketType;
 	uint port;
 	std::string address;
 	struct sockaddr_in socketStruct;

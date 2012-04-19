@@ -54,10 +54,10 @@ string extractLine(string& data, uint numLine)
 
 string httpHeader()
 {
-	string header = "HTTP/1.1 200 OK\n \
-				  Content-type: text/html; charset=UTF-8\n \
-				  Content-encoding: gzip\n \
-				  Server: Example server\n";
+	string header = "HTTP/1.1 200 OK\n "
+				  "Content-type: text/html; charset=UTF-8\n"
+				  // "Content-encoding: gzip\n"
+				  "Server: Example server\n\n";
 	return header;
 }
 
@@ -68,19 +68,50 @@ vector<string> splitString(string& data, char delimiter)
 
 	while((pos = data.find(delimiter, startPos)) != string::npos)
 	{
-		splittedStrings.push_back(data.substr(startPos, pos));
-		startPos = pos;
+		splittedStrings.push_back(data.substr(startPos, (pos - startPos)));
+		startPos = pos+1;
 	}
+	splittedStrings.push_back(data.substr(startPos, string::npos));
 	return splittedStrings;
 }
 
 string getFileName(string& data)
 {
 	vector<string> fields = splitString(data, 0x20);
-	return fields[2];
+	return fields[1];
+}
+
+#define PATH_TO_DOCUMENTS "/var/www"
+
+string getFileContent(string &fileName)
+{
+	string path = PATH_TO_DOCUMENTS, returnedData;
+	path.append(fileName);
+	cout << path << endl;
+	ifstream fileStream(path.c_str(), ios::binary);
+
+	if(fileStream.is_open())
+	{
+		fileStream.seekg(0, ios::end);
+		int fileLength = fileStream.tellg();
+		fileStream.seekg(0, ios::beg);
+		char *buffer = new char[fileLength];
+
+		fileStream.read(buffer, fileLength);
+		returnedData.append(buffer);
+
+		cout << "It works" << endl;
+
+		fileStream.close();
+		delete buffer;
+	}else{
+		returnedData.append("\n<h1>File not found</h1>");
+	}
+	return returnedData;
 }
 
 // Http server - start
+
 
 void readyRead(void *ptr)
 {
@@ -96,15 +127,18 @@ void readyRead(void *ptr)
 		string line = extractLine(data, 0);
 		string requestedFile = getFileName(line);
 
-		cout << "Client wants from me(hole request): "
-				<< line << endl;
+		//cout << "Client wants from me(hole request): "
+		//		<< line << endl;
 
 		cout << "Only file name: "
 				<< requestedFile << endl;
 
-		cout << "I'll say no to him with h1 paragraph" << endl;
+		//cout << "I'll say no to him with h1 paragraph" << endl;
 		// create a http response
-		string sendingData = httpHeader().append("\n<h1>No!</h1>");
+		string sendingData = httpHeader();
+		sendingData.append(getFileContent(requestedFile));
+		//cout << sendingData << endl;
+
 		// and send it to the client
 		client->write(sendingData);
 
