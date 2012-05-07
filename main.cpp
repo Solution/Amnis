@@ -14,7 +14,8 @@
 using namespace std;
 #include "Base64.h"
 #include "Socket.h"
-
+#include "AString.h"
+#include "HttpResponse.h"
 
 string extractLine(string& data, uint numLine)
 {
@@ -27,6 +28,10 @@ string extractLine(string& data, uint numLine)
 	return "nothing";
 }
 
+
+/*
+ * Simple http header string
+ */
 string httpHeader()
 {
 	string header = "HTTP/1.1 200 OK\n "
@@ -35,6 +40,10 @@ string httpHeader()
 	return header;
 }
 
+/*
+ * Function to split string into part
+ * @return vector<string>
+ */
 vector<string> splitString(string& data, char delimiter)
 {
 	uint startPos = 0, pos;
@@ -58,6 +67,8 @@ string getFileName(string& data)
 #define PATH_TO_DOCUMENTS "/var/www"
 #define ROOT_ITEM "root.pad"
 
+/*
+ */
 bool isItResource(string &fileName)
 {
 	vector<string> nameParts = splitString(fileName, '.');
@@ -225,6 +236,13 @@ void createSimpleHttpServer()
 
 int main(int argc, char** argv)
 {
+	HttpResponse *myResponse = new HttpResponse();
+	myResponse->addField(SERVER, "My Own/1.0");
+	myResponse->addField(CONTENT_TYPE, "text/html; charset=utf-8");
+
+	cout << myResponse->headerToString() << endl;
+
+
 	// run http server example
 	createSimpleHttpServer();
 
